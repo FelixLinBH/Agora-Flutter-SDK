@@ -107,6 +107,10 @@ class IRtcEngine {
     fun stopRhythmPlayer(callback: Callback)
 
     fun configRhythmPlayer(params: Map<String, *>, callback: Callback)
+
+    fun setExternalAudioSource(params: Map<String, *>, callback: Callback)
+
+    fun pushExternalAudioFrame(params: Map<String, *>, callback: Callback)
   }
 
   interface RtcVideoInterface {
@@ -647,6 +651,25 @@ class RtcEngineManager(
 
   override fun configRhythmPlayer(params: Map<String, *>, callback: Callback) {
     callback.code(engine?.audioEffectManager?.configRhythmPlayer(mapToRhythmPlayerConfig(params as Map<*, *>)))
+  }
+
+  override fun setExternalAudioSource(params: Map<String, *>, callback: Callback) {
+    callback.code(
+      engine?.setExternalAudioSource(
+        params["enabled"] as Boolean,
+        (params["sampleRate"] as Number).toInt(),
+        (params["channels"] as Number).toInt()
+      )
+    )
+  }
+
+  override fun pushExternalAudioFrame(params: Map<String, *>, callback: Callback) {
+    callback.code(
+      engine?.pushExternalAudioFrame(
+        params["data"] as ByteArray,
+        params["timestamp"] as Long
+      )
+    )
   }
 
   override fun enableVideo(callback: Callback) {

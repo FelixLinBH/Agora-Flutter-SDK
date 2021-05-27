@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 
@@ -323,6 +324,19 @@ class RtcEngine with RtcEngineInterface {
       int interval, int smooth, bool report_vad) {
     return _invokeMethod('enableAudioVolumeIndication',
         {'interval': interval, 'smooth': smooth, 'report_vad': report_vad});
+  }
+
+  @override
+  Future<void> setExternalAudioSource(
+      bool enabled, int sampleRate, int channels) {
+    return _invokeMethod('setExternalAudioSource',
+        {'enabled': enabled, 'sampleRate': sampleRate, 'channels': channels});
+  }
+
+  @override
+  Future<void> pushExternalAudioFrame(Uint8List data, int timestamp) {
+    return _invokeMethod(
+        'pushExternalAudioFrame', {'data': data, 'timestamp': timestamp});
   }
 
   @override
@@ -1596,6 +1610,9 @@ mixin RtcAudioInterface {
   /// - `false`: (Default) Disable the voice activity detection of the local user. Once it is disabled, the vad parameter of the [RtcEngineEventHandler.audioVolumeIndication] callback does not report the voice activity status of the local user, except for scenarios where the engine automatically detects the voice activity of the local user.
   Future<void> enableAudioVolumeIndication(
       int interval, int smooth, bool report_vad);
+
+  Future<void> setExternalAudioSource(bool enabled, int sampleRate, int channels);
+  Future<void> pushExternalAudioFrame(Uint8List data, int timestamp);
 }
 
 /// @nodoc
