@@ -334,9 +334,13 @@ class RtcEngine with RtcEngineInterface {
   }
 
   @override
-  Future<void> pushExternalAudioFrame(Uint8List data, int timestamp) {
-    return _invokeMethod(
-        'pushExternalAudioFrame', {'data': data, 'timestamp': timestamp});
+  Future<void> pushExternalAudioFrame(Uint8List data, int timestamp,
+      {int samples = 0}) {
+    return _invokeMethod('pushExternalAudioFrame', {
+      'data': data,
+      'timestamp': timestamp,
+      'samples': samples,
+    });
   }
 
   @override
@@ -1611,7 +1615,8 @@ mixin RtcAudioInterface {
   Future<void> enableAudioVolumeIndication(
       int interval, int smooth, bool report_vad);
 
-  Future<void> setExternalAudioSource(bool enabled, int sampleRate, int channels);
+  Future<void> setExternalAudioSource(
+      bool enabled, int sampleRate, int channels);
   Future<void> pushExternalAudioFrame(Uint8List data, int timestamp);
 }
 

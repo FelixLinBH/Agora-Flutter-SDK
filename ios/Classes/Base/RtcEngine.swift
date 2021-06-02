@@ -126,6 +126,10 @@ protocol RtcEngineAudioInterface {
     func stopRhythmPlayer(_ callback: Callback)
 
     func configRhythmPlayer(_ params: NSDictionary, _ callback: Callback)
+
+    func setExternalAudioSource(_ params: NSDictionary, callback: Callback)
+
+    func pushExternalAudioFrame(_ params: NSDictionary, callback: Callback)
 }
 
 protocol RtcEngineVideoInterface {
@@ -591,6 +595,24 @@ class RtcEngineManager: NSObject, RtcEngineInterface {
 
     @objc func configRhythmPlayer(_ params: NSDictionary, _ callback: Callback) {
         callback.code(engine?.configRhythmPlayer(mapToRhythmPlayerConfig(params as! Dictionary)))
+    }
+
+    @objc func setExternalAudioSource(_ params: NSDictionary, callback: Callback) {
+        let sampleRate = params["sampleRate"] as! UInt
+        let channels = params["channels"] as! UInt
+        engine?.enableExternalAudioSource(withSampleRate: sampleRate, channelsPerFrame: channels)
+        callback.code(1)
+    }
+
+    @objc  func pushExternalAudioFrame(_ params: NSDictionary, callback: Callback) {
+        let timestamp = params["timestamp"] as! TimeInterval
+        let samples = params["samples"] as! UInt
+        var data =  params["data"] as! Data
+        data.withUnsafeMutableBytes { ptr in
+            let rawPtr = ptr.baseAddress!
+            engine?.pushExternalAudioFrameRawData(rawPtr, samples: samples, timestamp: timestamp)
+        }
+        callback.code(1)
     }
 
     @objc func enableVideo(_ callback: Callback) {
