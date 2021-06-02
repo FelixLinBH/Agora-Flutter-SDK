@@ -606,13 +606,15 @@ class RtcEngineManager: NSObject, RtcEngineInterface {
 
     @objc  func pushExternalAudioFrame(_ params: NSDictionary, _ callback: Callback) {
         let timestamp = params["timestamp"] as! TimeInterval
-        var data =  params["data"] as! Data
+        // The raw data could be encoded into FlutterStandardTypedData by Flutter.
+        // Thus, we need to extract the raw data from the packaged one.
+        var data =  (params["data"] as! FlutterStandardTypedData).data
         let samples = UInt(data.count / 2)  // Suggest that the data is composed by Int16
         data.withUnsafeMutableBytes { ptr in
             let rawPtr = ptr.baseAddress!
-            engine?.pushExternalAudioFrameRawData(rawPtr, samples: samples, timestamp: timestamp)
+            let result = engine?.pushExternalAudioFrameRawData(rawPtr, samples: samples, timestamp: timestamp)
+            callback.code(result == true ? 1 : 0)
         }
-        callback.code(1)
     }
 
     @objc func enableVideo(_ callback: Callback) {
