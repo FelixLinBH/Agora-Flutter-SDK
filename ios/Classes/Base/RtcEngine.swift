@@ -127,9 +127,9 @@ protocol RtcEngineAudioInterface {
 
     func configRhythmPlayer(_ params: NSDictionary, _ callback: Callback)
 
-    func setExternalAudioSource(_ params: NSDictionary, callback: Callback)
+    func setExternalAudioSource(_ params: NSDictionary, _ callback: Callback)
 
-    func pushExternalAudioFrame(_ params: NSDictionary, callback: Callback)
+    func pushExternalAudioFrame(_ params: NSDictionary, _ callback: Callback)
 }
 
 protocol RtcEngineVideoInterface {
@@ -597,14 +597,14 @@ class RtcEngineManager: NSObject, RtcEngineInterface {
         callback.code(engine?.configRhythmPlayer(mapToRhythmPlayerConfig(params as! Dictionary)))
     }
 
-    @objc func setExternalAudioSource(_ params: NSDictionary, callback: Callback) {
+    @objc func setExternalAudioSource(_ params: NSDictionary, _ callback: Callback) {
         let sampleRate = params["sampleRate"] as! UInt
         let channels = params["channels"] as! UInt
         engine?.enableExternalAudioSource(withSampleRate: sampleRate, channelsPerFrame: channels)
         callback.code(1)
     }
 
-    @objc  func pushExternalAudioFrame(_ params: NSDictionary, callback: Callback) {
+    @objc  func pushExternalAudioFrame(_ params: NSDictionary, _ callback: Callback) {
         let timestamp = params["timestamp"] as! TimeInterval
         var data =  params["data"] as! Data
         let samples = UInt(data.count / 2)  // Suggest that the data is composed by Int16
