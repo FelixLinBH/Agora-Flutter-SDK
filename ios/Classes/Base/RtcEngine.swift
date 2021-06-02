@@ -606,8 +606,8 @@ class RtcEngineManager: NSObject, RtcEngineInterface {
 
     @objc  func pushExternalAudioFrame(_ params: NSDictionary, callback: Callback) {
         let timestamp = params["timestamp"] as! TimeInterval
-        let samples = params["samples"] as! UInt
         var data =  params["data"] as! Data
+        let samples = (data.count / 2) as! UInt // Suggest that the data is composed by Int16
         data.withUnsafeMutableBytes { ptr in
             let rawPtr = ptr.baseAddress!
             engine?.pushExternalAudioFrameRawData(rawPtr, samples: samples, timestamp: timestamp)

@@ -334,13 +334,9 @@ class RtcEngine with RtcEngineInterface {
   }
 
   @override
-  Future<void> pushExternalAudioFrame(Uint8List data, int timestamp,
-      {int samples = 0}) {
-    return _invokeMethod('pushExternalAudioFrame', {
-      'data': data,
-      'timestamp': timestamp,
-      'samples': samples,
-    });
+  Future<void> pushExternalAudioFrame(Uint8List data, int timestamp) {
+    return _invokeMethod(
+        'pushExternalAudioFrame', {'data': data, 'timestamp': timestamp});
   }
 
   @override
