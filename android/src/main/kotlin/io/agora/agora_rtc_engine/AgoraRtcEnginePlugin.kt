@@ -16,6 +16,7 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
 import io.flutter.plugin.platform.PlatformViewRegistry
+import org.json.JSONObject
 import kotlin.math.abs
 
 internal class EventHandler(private val eventSink: EventChannel.EventSink?) : IrisEventHandler {
@@ -48,6 +49,34 @@ open class CallApiMethodCallHandler(
 
     return ret
   }
+
+
+  protected open fun pushExternalAudioFrame(json: JSONObject): Int {
+    val result = (irisRtcEngine.rtcEngine as RtcEngine?)?.pushExternalAudioFrame(
+      json["data"] as ByteArray,
+      json["timestamp"] as Long
+    )
+    return if (result != null && result > 0) {
+      1
+    } else {
+      -1
+    }
+  }
+
+  protected open fun setExternalAudioSource(json: JSONObject): Int {
+    val result = (irisRtcEngine.rtcEngine as RtcEngine?)?.setExternalAudioSource(
+      json["enabled"] as Boolean,
+      (json["sampleRate"] as Number).toInt(),
+      (json["channels"] as Number).toInt()
+    )
+    return if (result != null && result > 0) {
+      1
+    } else {
+      -1
+    }
+  }
+
+
 
   protected open fun callApiWithBuffer(
     apiType: Int,
@@ -84,6 +113,14 @@ open class CallApiMethodCallHandler(
         "callApiWithBuffer" -> {
           val buffer = call.argument<ByteArray>("buffer")
           callApiWithBuffer(apiType!!, params, buffer, sb)
+        }
+        "pushExternalAudioFrame" -> {
+          val jsonObject = JSONObject(params)
+          pushExternalAudioFrame(jsonObject)
+        }
+        "setExternalAudioSource" -> {
+          val jsonObject = JSONObject(params)
+          setExternalAudioSource(jsonObject)
         }
         else -> {
           // This should not occur
