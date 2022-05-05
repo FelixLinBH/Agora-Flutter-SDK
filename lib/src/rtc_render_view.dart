@@ -1,67 +1,70 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/rendering.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 
-import 'enum_converter.dart';
 import 'enums.dart';
+import 'impl/rtc_ender_view_impl.dart';
 
-final Map<int, MethodChannel> _channels = {};
-
-/// Use SurfaceView in Android.
 ///
-/// Use [UIView](https://developer.apple.com/documentation/uikit/uiview) in iOS.
+/// RtcSurfaceView class for rendering local and remote video.
+/// This class has the following corresponding classes:
+///  Android: SurfaceView (https://developer.android.com/reference/android/view/SurfaceView).
+///  iOS: UIView (https://developer.apple.com/documentation/uikit/uiview) Applies to the macOS and Windows platforms only.
+///
 class RtcSurfaceView extends StatefulWidget {
-  /// User ID.
+  ///
+  /// The user ID.
+  ///
   final int uid;
 
-  /// The unique channel name for the AgoraRTC session in the string format. The string length must be less than 64 bytes. Supported character scopes are:
-  /// - All lowercase English letters: a to z.
-  /// - All uppercase English letters: A to Z.
-  /// - All numeric characters: 0 to 9.
-  /// - The space character.
-  /// - Punctuation characters and other symbols, including: "!", "#", "$", "%", "&", "(", ")", "+", "-", ":", ";", "<", "=", ".", ">", "?", "@", "\[", "\]", "^", "_", " {", "}", "|", "~", ",".
   ///
-  /// **Note**
-  /// - The default value is the empty string "". Use the default value if the user joins the channel using the [RtcEngine.joinChannel] method in the [RtcEngine] class.
-  /// - If the user joins the channel using the [RtcChannel.joinChannel] method in the [RtcChannel] class, set this parameter as the channelId of the [RtcChannel] object.
+  /// The channel name. This parameter signifies the channel in which users engage in real-time audio and video interaction. Under the premise of the same App ID, users who fill in the same channel ID enter the same channel for audio and video interaction. The string length must be less than 64 bytes. Supported characters:
+  ///  The 26 lowercase English letters: a to z.
+  ///  The 26 uppercase English letters: A to Z.
+  ///  The 10 numeric characters: 0 to 9.
+  ///  Space
+  ///  "!", "#", "$", "%", "&", "(", ")", "+", "-", ":", ";", "<", "=", ".", ">", "?", "@", "[", "]", "^", "_", "{", "}", "|", "~", ","
+  ///
   final String? channelId;
 
-  /// The rendering mode of the video view.
+  ///
+  /// The rendering mode of the video. See VideoRenderMode .
+  ///
   final VideoRenderMode renderMode;
 
-  /// The video mirror mode.
+  ///
+  /// The mirror mode of the view. See VideoMirrorMode .
+  ///
   final VideoMirrorMode mirrorMode;
 
-  /// Control whether the surface view's surface is placed on top of its window.
   ///
-  /// See [TargetPlatform.android].
+  /// Whether to place the current screen on another layer of the current window.This method is for Android only.
+  ///
   final bool zOrderOnTop;
 
-  /// Control whether the surface view's surface is placed on top of another regular surface view in the window (but still behind the window itself).
   ///
-  /// See [TargetPlatform.android].
+  /// Whether to place the surface layer of the SurfaceView view on top of another SurfaceView in the window (but still below the window).This method is for Android only.
+  ///
   final bool zOrderMediaOverlay;
 
-  /// Callback signature for when a platform view was created.
   ///
-  /// `id` is the platform view's unique identifier.
+  /// This event is triggered when a platform view is created.
+  ///
   final PlatformViewCreatedCallback? onPlatformViewCreated;
 
-  /// Which gestures should be consumed by the web view.
   ///
-  /// It is possible for other gesture recognizers to be competing with the web view on pointer
-  /// events, e.g if the web view is inside a [ListView] the [ListView] will want to handle
-  /// vertical drags. The web view will claim gestures that are recognized by any of the
-  /// recognizers on this list.
+  /// The Gesture object.
   ///
-  /// When this set is empty or null, the web view will only handle pointer events for gestures that
-  /// were not claimed by any other gesture recognizer.
   final Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers;
 
-  /// Constructs a [RtcSurfaceView]
-  RtcSurfaceView({
+  ///
+  /// Whether to create a subprocess.
+  ///
+  final bool subProcess;
+
+  /// Constructs the [RtcSurfaceView].
+  const RtcSurfaceView({
     Key? key,
     required this.uid,
     this.channelId,
@@ -71,173 +74,70 @@ class RtcSurfaceView extends StatefulWidget {
     this.zOrderMediaOverlay = false,
     this.onPlatformViewCreated,
     this.gestureRecognizers,
+    this.subProcess = false,
   }) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
-    return _RtcSurfaceViewState();
+    return RtcSurfaceViewState();
   }
 }
 
-class _RtcSurfaceViewState extends State<RtcSurfaceView> {
-  int? _id;
-  int? _renderMode;
-  int? _mirrorMode;
-
-  @override
-  Widget build(BuildContext context) {
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        child: AndroidView(
-          viewType: 'AgoraSurfaceView',
-          onPlatformViewCreated: onPlatformViewCreated,
-          hitTestBehavior: PlatformViewHitTestBehavior.transparent,
-          creationParams: {
-            'data': {'uid': widget.uid, 'channelId': widget.channelId},
-            'renderMode': _renderMode,
-            'mirrorMode': _mirrorMode,
-            'zOrderOnTop': widget.zOrderOnTop,
-            'zOrderMediaOverlay': widget.zOrderMediaOverlay,
-          },
-          creationParamsCodec: const StandardMessageCodec(),
-          gestureRecognizers: widget.gestureRecognizers,
-        ),
-      );
-    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        child: UiKitView(
-          viewType: 'AgoraSurfaceView',
-          onPlatformViewCreated: onPlatformViewCreated,
-          hitTestBehavior: PlatformViewHitTestBehavior.transparent,
-          creationParams: {
-            'data': {'uid': widget.uid, 'channelId': widget.channelId},
-            'renderMode': _renderMode,
-            'mirrorMode': _mirrorMode,
-          },
-          creationParamsCodec: const StandardMessageCodec(),
-          gestureRecognizers: widget.gestureRecognizers,
-        ),
-      );
-    }
-    return Text('$defaultTargetPlatform is not yet supported by the plugin');
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _renderMode = VideoRenderModeConverter(widget.renderMode).value();
-    _mirrorMode = VideoMirrorModeConverter(widget.mirrorMode).value();
-  }
-
-  @override
-  void didUpdateWidget(RtcSurfaceView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.uid != widget.uid ||
-        oldWidget.channelId != widget.channelId) {
-      setData();
-    }
-    if (oldWidget.renderMode != widget.renderMode) {
-      setRenderMode();
-    }
-    if (oldWidget.mirrorMode != widget.mirrorMode) {
-      setMirrorMode();
-    }
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      if (oldWidget.zOrderOnTop != widget.zOrderOnTop) {
-        setZOrderOnTop();
-      }
-      if (oldWidget.zOrderMediaOverlay != widget.zOrderMediaOverlay) {
-        setZOrderMediaOverlay();
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _channels.remove(_id);
-  }
-
-  void setData() {
-    _channels[_id]?.invokeMethod('setData', {
-      'data': {'uid': widget.uid, 'channelId': widget.channelId}
-    });
-  }
-
-  void setRenderMode() {
-    _renderMode = VideoRenderModeConverter(widget.renderMode).value();
-    _channels[_id]?.invokeMethod('setRenderMode', {'renderMode': _renderMode});
-  }
-
-  void setMirrorMode() {
-    _mirrorMode = VideoMirrorModeConverter(widget.mirrorMode).value();
-    _channels[_id]?.invokeMethod('setMirrorMode', {'mirrorMode': _mirrorMode});
-  }
-
-  void setZOrderOnTop() {
-    _channels[_id]
-        ?.invokeMethod('setZOrderOnTop', {'onTop': widget.zOrderOnTop});
-  }
-
-  void setZOrderMediaOverlay() {
-    _channels[_id]?.invokeMethod(
-        'setZOrderMediaOverlay', {'isMediaOverlay': widget.zOrderMediaOverlay});
-  }
-
-  Future<void> onPlatformViewCreated(int id) async {
-    _id = id;
-    if (!_channels.containsKey(id)) {
-      _channels[id] = MethodChannel('agora_rtc_engine/surface_view_$id');
-    }
-    widget.onPlatformViewCreated?.call(id);
-  }
-}
-
-/// Use TextureView in Android.
-/// Not support for iOS.
-/// [TargetPlatform.android]
+///
+/// RtcTextureView class for rendering local and remote video.
+/// This class has the following corresponding classes:
+///  Android: TextureView (https://developer.android.com/reference/android/view/TextureView)
+/// or FlutterTexture (https://api.flutter.dev/objcdoc/Protocols/FlutterTexture.html)。
+///  iOS/macOS/Windows: FlutterTexture (https://api.flutter.dev/objcdoc/Protocols/FlutterTexture.html)。
+///
 class RtcTextureView extends StatefulWidget {
-  /// User ID.
+  ///
+  /// The user ID.
+  ///
   final int uid;
 
-  /// The unique channel name for the AgoraRTC session in the string format. The string length must be less than 64 bytes. Supported character scopes are:
-  /// - All lowercase English letters: a to z.
-  /// - All uppercase English letters: A to Z.
-  /// - All numeric characters: 0 to 9.
-  /// - The space character.
-  /// - Punctuation characters and other symbols, including: "!", "#", "$", "%", "&", "(", ")", "+", "-", ":", ";", "<", "=", ".", ">", "?", "@", "\[", "\]", "^", "_", " {", "}", "|", "~", ",".
   ///
-  /// **Note**
-  /// - The default value is the empty string "". Use the default value if the user joins the channel using the [RtcEngine.joinChannel] method in the [RtcEngine] class.
-  /// - If the user joins the channel using the [RtcChannel.joinChannel] method in the [RtcChannel] class, set this parameter as the channelId of the [RtcChannel] object.
+  /// The channel name. This parameter signifies the channel in which users engage in real-time audio and video interaction. Under the premise of the same App ID, users who fill in the same channel ID enter the same channel for audio and video interaction. The string length must be less than 64 bytes. Supported characters:
+  ///  The 26 lowercase English letters: a to z.
+  ///  The 26 uppercase English letters: A to Z.
+  ///  The 10 numeric characters: 0 to 9.
+  ///  Space
+  ///  "!", "#", "$", "%", "&", "(", ")", "+", "-", ":", ";", "<", "=", ".", ">", "?", "@", "[", "]", "^", "_", "{", "}", "|", "~", ","
+  ///
   final String? channelId;
 
-  /// The rendering mode of the video view.
+  ///
+  /// The rendering mode of the video. See VideoRenderMode .
+  ///
   final VideoRenderMode renderMode;
 
-  /// The video mirror mode.
+  ///
+  /// The mirror mode of the view. See VideoMirrorMode .
+  ///
   final VideoMirrorMode mirrorMode;
 
-  /// Callback signature for when a platform view was created.
   ///
-  /// `id` is the platform view's unique identifier.
+  /// This event is triggered when a platform view is created.
+  ///
   final PlatformViewCreatedCallback? onPlatformViewCreated;
 
-  /// Which gestures should be consumed by the web view.
   ///
-  /// It is possible for other gesture recognizers to be competing with the web view on pointer
-  /// events, e.g if the web view is inside a [ListView] the [ListView] will want to handle
-  /// vertical drags. The web view will claim gestures that are recognized by any of the
-  /// recognizers on this list.
+  /// The Gesture object.
   ///
-  /// When this set is empty or null, the web view will only handle pointer events for gestures that
-  /// were not claimed by any other gesture recognizer.
   final Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers;
 
-  /// Constructs a [RtcTextureView]
-  RtcTextureView({
+  ///
+  /// Whether to render the video using FlutterTexture.
+  ///
+  final bool useFlutterTexture;
+
+  ///
+  /// Whether to create a subprocess.
+  ///
+  final bool subProcess;
+
+  /// Constructs the [RtcTextureView].
+  const RtcTextureView({
     Key? key,
     required this.uid,
     this.channelId,
@@ -245,90 +145,12 @@ class RtcTextureView extends StatefulWidget {
     this.mirrorMode = VideoMirrorMode.Auto,
     this.onPlatformViewCreated,
     this.gestureRecognizers,
+    this.useFlutterTexture = true,
+    this.subProcess = false,
   }) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
-    return _RtcTextureViewState();
-  }
-}
-
-class _RtcTextureViewState extends State<RtcTextureView> {
-  int? _id;
-  int? _renderMode;
-  int? _mirrorMode;
-
-  @override
-  Widget build(BuildContext context) {
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        child: AndroidView(
-          viewType: 'AgoraTextureView',
-          onPlatformViewCreated: onPlatformViewCreated,
-          hitTestBehavior: PlatformViewHitTestBehavior.transparent,
-          creationParams: {
-            'data': {'uid': widget.uid, 'channelId': widget.channelId},
-            'renderMode': _renderMode,
-            'mirrorMode': _mirrorMode,
-          },
-          creationParamsCodec: const StandardMessageCodec(),
-          gestureRecognizers: widget.gestureRecognizers,
-        ),
-      );
-    }
-    return Text('$defaultTargetPlatform is not yet supported by the plugin');
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _renderMode = VideoRenderModeConverter(widget.renderMode).value();
-    _mirrorMode = VideoMirrorModeConverter(widget.mirrorMode).value();
-  }
-
-  @override
-  void didUpdateWidget(RtcTextureView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.uid != widget.uid ||
-        oldWidget.channelId != widget.channelId) {
-      setData();
-    }
-    if (oldWidget.renderMode != widget.renderMode) {
-      setRenderMode();
-    }
-    if (oldWidget.mirrorMode != widget.mirrorMode) {
-      setMirrorMode();
-    }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _channels.remove(_id);
-  }
-
-  void setData() {
-    _channels[_id]?.invokeMethod('setData', {
-      'data': {'uid': widget.uid, 'channelId': widget.channelId}
-    });
-  }
-
-  void setRenderMode() {
-    _renderMode = VideoRenderModeConverter(widget.renderMode).value();
-    _channels[_id]?.invokeMethod('setRenderMode', {'renderMode': _renderMode});
-  }
-
-  void setMirrorMode() {
-    _mirrorMode = VideoMirrorModeConverter(widget.mirrorMode).value();
-    _channels[_id]?.invokeMethod('setMirrorMode', {'mirrorMode': _mirrorMode});
-  }
-
-  Future<void> onPlatformViewCreated(int id) async {
-    _id = id;
-    if (!_channels.containsKey(id)) {
-      _channels[id] = MethodChannel('agora_rtc_engine/texture_view_$id');
-    }
-    widget.onPlatformViewCreated?.call(id);
+    return RtcTextureViewState();
   }
 }
