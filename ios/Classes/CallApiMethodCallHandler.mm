@@ -23,7 +23,7 @@
         char res[kBasicResultLength] = "";
         int ret;
         if (buffer == nil || buffer == [NSNull null]) {
-            
+
             ret = [self callApi:apiType _:params _:res];
         } else {
             ret = [self callApiWithBuffer:apiType _:params _:(void *)[[buffer data] bytes] _:res];
@@ -43,24 +43,45 @@
                     message:des
                     details:nil]);
         }
-    } else {
+    } else if ([@"setExternalAudioSource" isEqualToString:call.method] ){
+        NSDictionary<NSString *, id> *arguments = call.arguments;
+        NSString *params = arguments[@"params"];
+        NSData *data = [params dataUsingEncoding:NSUTF8StringEncoding];
+        NSDictionary<NSString *, id> *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+        NSNumber *sampleRate = json[@"sampleRate"];
+        NSNumber *channels = json[@"channels"];
+        [((__bridge AgoraRtcEngineKit *) self.irisRtcEngine->rtc_engine())enableExternalAudioSourceWithSampleRate:[sampleRate unsignedIntegerValue] channelsPerFrame:[channels unsignedIntegerValue]];
+        result(@(1));
+    } else if ([@"pushExternalAudioFrame" isEqualToString:call.method] ){
+        NSDictionary<NSString *, id> *arguments = call.arguments;
+        NSString *params = arguments[@"params"];
+        FlutterStandardTypedData *buffer = arguments[@"buffer"];
+        void *rawData = (void *) [buffer.data bytes];
+        NSData *data = [params dataUsingEncoding:NSUTF8StringEncoding];
+        NSDictionary<NSString *, id> *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+        NSNumber *timestamp = json[@"timestamp"];
+        NSUInteger samples = buffer.data.length / 2;  // Suggest that the data is composed by Int16
+        bool isSuccess = [((__bridge AgoraRtcEngineKit *) self.irisRtcEngine->rtc_engine())pushExternalAudioFrameRawData:rawData  samples:samples timestamp:[timestamp doubleValue]];
+        result((isSuccess)?@(1):@(0));
+    }
+    else {
       result(FlutterMethodNotImplemented);
     }
 }
 - (int)callApi:(NSNumber *) apiType _:(NSString *)params _:(char *) result {
     ApiTypeEngine apiTypeEngine = (ApiTypeEngine)[apiType unsignedIntValue];
     int ret = self.irisRtcEngine->CallApi(apiTypeEngine, [params UTF8String], result);
-    
+
      if (apiTypeEngine == ApiTypeEngine::kEngineInitialize) {
          [[RtcEngineRegistry shared] onRtcEngineCreated:(__bridge AgoraRtcEngineKit *) self.irisRtcEngine->rtc_engine()];
      }
-    
+
      if (apiTypeEngine == ApiTypeEngine::kEngineRelease) {
          [[RtcEngineRegistry shared] onRtcEngineDestroyed];
      }
-    
+
     return ret;
-    
+
 }
 
 - (int)callApiWithBuffer:(NSNumber *) apiType _:(NSString *)params _:(void *)buffer _:(char *) result {
