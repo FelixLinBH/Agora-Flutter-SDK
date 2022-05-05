@@ -2001,4 +2001,17 @@ class RtcEngineImpl with MediaRecorderImplMixin implements RtcEngine {
       }),
     });
   }
+
+  @override
+  Future<void> setExternalAudioSource(
+      bool enabled, int sampleRate, int channels) {
+    return _invokeMethod('setExternalAudioSource',
+        {'enabled': enabled, 'sampleRate': sampleRate, 'channels': channels});
+  }
+
+  @override
+  Future<void> pushExternalAudioFrame(Uint8List data, int timestamp) {
+    return _invokeMethod(
+        'pushExternalAudioFrame', {'data': data, 'timestamp': timestamp});
+  }
 }

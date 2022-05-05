@@ -2306,4 +2306,7 @@ abstract class RtcEngine {
 
   /// @nodoc
   Future<void> enableWirelessAccelerate(bool enabled);
+
+  Future<void> setExternalAudioSource(bool enabled, int sampleRate, int channels);
+  Future<void> pushExternalAudioFrame(Uint8List data, int timestamp);
 }

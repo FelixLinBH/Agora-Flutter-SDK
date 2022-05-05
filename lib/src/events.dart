@@ -1,6 +1,6 @@
 import 'classes.dart';
-import 'enum_converter.dart';
 import 'enums.dart';
+import 'impl/enum_converter.dart';
 
 // ignore: public_member_api_docs
 typedef EmptyCallback = void Function();

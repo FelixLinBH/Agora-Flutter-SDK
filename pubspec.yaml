@@ -14,7 +14,7 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
   js: ^0.6.3
-  json_annotation: ^4.4.0
+  json_annotation:
 dev_dependencies:
   integration_test:
     sdk: flutter
