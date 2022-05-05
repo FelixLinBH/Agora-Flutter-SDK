@@ -2014,7 +2014,8 @@ class RtcEngineImpl with MediaRecorderImplMixin implements RtcEngine {
   @override
   Future<void> pushExternalAudioFrame(Uint8List data, int timestamp) {
     return _invokeMethod('pushExternalAudioFrame', {
-      'params': jsonEncode({'data': data, 'timestamp': timestamp})
+      'params': jsonEncode({'timestamp': timestamp}),
+      'buffer': data,
     });
   }
 }

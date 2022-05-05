@@ -51,12 +51,12 @@ open class CallApiMethodCallHandler(
   }
 
 
-  protected open fun pushExternalAudioFrame(json: JSONObject): Int {
+  protected open fun pushExternalAudioFrame(json: JSONObject, buffer: ByteArray?): Int {
     val result = (irisRtcEngine.rtcEngine as RtcEngine?)?.pushExternalAudioFrame(
-      json["data"] as ByteArray,
+      buffer,
       json["timestamp"] as Long
     )
-    return if (result != null && result > 0) {
+    return if (result != null && result == 0) {
       1
     } else {
       -1
@@ -69,7 +69,7 @@ open class CallApiMethodCallHandler(
       (json["sampleRate"] as Number).toInt(),
       (json["channels"] as Number).toInt()
     )
-    return if (result != null && result > 0) {
+    return if (result != null && result == 0) {
       1
     } else {
       -1
@@ -115,8 +115,9 @@ open class CallApiMethodCallHandler(
           callApiWithBuffer(apiType!!, params, buffer, sb)
         }
         "pushExternalAudioFrame" -> {
+          val buffer = call.argument<ByteArray>("buffer")
           val jsonObject = JSONObject(params)
-          pushExternalAudioFrame(jsonObject)
+          pushExternalAudioFrame(jsonObject,buffer)
         }
         "setExternalAudioSource" -> {
           val jsonObject = JSONObject(params)
@@ -162,7 +163,7 @@ class AgoraRtcEnginePlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stre
   private lateinit var eventChannel: EventChannel
 
   private var eventSink: EventChannel.EventSink? = null
-//  private val managerAgoraTextureView = RtcEngineManager { methodName, data -> emit(methodName, data) }
+  //  private val managerAgoraTextureView = RtcEngineManager { methodName, data -> emit(methodName, data) }
   private val handler = Handler(Looper.getMainLooper())
   private lateinit var rtcChannelPlugin: AgoraRtcChannelPlugin;// = AgoraRtcChannelPlugin(irisRtcEngine)
   private lateinit var callApiMethodCallHandler: CallApiMethodCallHandler
@@ -254,21 +255,21 @@ class AgoraRtcEnginePlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stre
 
     // Iris supported
     when (call.method) {
-        "createTextureRender" -> {
-          result.notImplemented()
-          return
-        }
-        "destroyTextureRender" -> {
-          result.notImplemented()
-          return
-        }
-        "getAssetAbsolutePath" -> {
-          getAssetAbsolutePath(call, result)
-          return
-        }
-        else -> {
-          callApiMethodCallHandler.onMethodCall(call, result)
-        }
+      "createTextureRender" -> {
+        result.notImplemented()
+        return
+      }
+      "destroyTextureRender" -> {
+        result.notImplemented()
+        return
+      }
+      "getAssetAbsolutePath" -> {
+        getAssetAbsolutePath(call, result)
+        return
+      }
+      else -> {
+        callApiMethodCallHandler.onMethodCall(call, result)
+      }
     }
 
   }
